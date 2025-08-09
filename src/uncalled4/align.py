@@ -14,7 +14,6 @@ from .argparse import ArgParser
 from .ref_index import str_to_coord
 from .pore_model import PoreModel
 from . import ExceptionWrapper
-
 import _uncalled4
 from _uncalled4 import EventDetector
 

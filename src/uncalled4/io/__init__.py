@@ -20,6 +20,34 @@ from collections import namedtuple
 import multiprocessing as mp
 import pysam
 from time import time
+import h5py
+class HDF5File():
+    def __init__(self,filename):
+        self.h5f = h5py.File(filename, 'w')
+        windowsize = 9
+        featuredim = 5
+        self.h5f.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32')#features has 3+4 
+        self.h5f.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int')
+        self.h5f.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int')
+        self.h5f.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str))#features has 3+4 
+    def write(self,redd_data):
+        windowsize = 9
+        featuredim = 5
+        # for redd_data in out:
+        X,y_call,y_ref,info = np.array(redd_data.X),np.array(redd_data.y_call),np.array(redd_data.y_ref),redd_data.info
+        saved_size = self.h5f['X'].shape[0]
+        new_size = X.shape[0]
+        self.h5f['X'].resize((saved_size+new_size,windowsize,featuredim))
+        self.h5f['X'][saved_size:,:,:]=np.asarray(X)
+        
+        self.h5f['y_call'].resize((saved_size+new_size,windowsize))
+        self.h5f['y_call'][saved_size:,:]=np.asarray(y_call)
+
+        self.h5f['y_ref'].resize((saved_size+new_size,windowsize))
+        self.h5f['y_ref'][saved_size:,:]=np.asarray(y_ref)
+
+        self.h5f['info'].resize((saved_size+new_size,))
+        self.h5f['info'][saved_size:,]=info
 
 INPUT_PARAMS = np.array(["eventalign_in", "tombo_in", "bam_in"])
 OUTPUT_PARAMS = np.array(["tsv_out", "eventalign_out", "bam_out", "model_dir", "m6anet_out"])
@@ -107,6 +135,15 @@ class TrackIO:
                 self.output = sys.stdout
             else:
                 self.output = open(self.filename, mode)
+    def _init_hdf5_output(self, buffered, mode="w"):
+        if buffered:
+            self.output = None
+            self.out_buffer = list()
+        else:
+            if self.filename == "-":
+                self.output =  HDF5File(self.filename)
+            else:
+                self.output =  HDF5File(self.filename)
 
     def _set_output(self, out):
         if self.prms.buffered:

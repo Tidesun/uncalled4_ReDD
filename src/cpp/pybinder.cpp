@@ -9,7 +9,7 @@
 #include "intervals.hpp"
 #include "eventalign.hpp"
 #include "aln.hpp"
-
+#include "eventalign_redd.hpp"
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -33,6 +33,15 @@ size_t pybind_model(py::module_ &m, std::string suffix) {
 
     auto fn_new = write_eventalign_new<Model>;
     m.def(("write_eventalign_new_"+suffix).c_str(), fn_new);
+    auto fn_redd_new = write_eventalign_redd_new<Model>;
+    m.def(("write_eventalign_redd_new_"+suffix).c_str(), fn_redd_new);
+    // m.def("write_eventalign_redd_new", 
+    //     &write_eventalign_redd_new<Model>,
+    //     py::arg("alignment"),
+    //     py::arg("write_name"),
+    //     py::arg("signal_index"),
+    //     py::arg("signal_np")
+    // );
     return 0;
 }
 
@@ -61,8 +70,59 @@ PYBIND11_MODULE(_uncalled4, m) {
 
     py::bind_vector<std::vector<u8>>(m, "ArrayU8", py::buffer_protocol());
     py::bind_vector<std::vector<u16>>(m, "ArrayU16", py::buffer_protocol());
+    // py::bind_vector<std::vector<u32>>(m, "ArrayU32", py::buffer_protocol());
     py::bind_vector<std::vector<u32>>(m, "ArrayU32", py::buffer_protocol());
+    py::bind_vector<std::vector<int>>(m, "Arrayint", py::buffer_protocol());
+    py::bind_vector<std::vector<float>>(m, "ArrayFloat", py::buffer_protocol());
 
+    // .def(py::pickle(
+    // [](const std::vector<u32>& v) {
+    //     return py::cast(v); // returns py::object that is actually a list
+    // },
+    // [](py::object obj) {
+    //     return obj.cast<std::vector<u32>>();
+    // }
+    // ));
+    py::class_<redd_data_t>(m, "ReddData")
+        .def(py::init<>())
+        .def_readwrite("X", &redd_data_t::X)
+        .def_readwrite("y_ref", &redd_data_t::y_ref)
+        .def_readwrite("y_call", &redd_data_t::y_call)
+        .def_readwrite("info", &redd_data_t::info)
+        .def_readwrite("X_candidate", &redd_data_t::X_candidate)
+        .def_readwrite("y_ref_candidate", &redd_data_t::y_ref_candidate)
+        .def_readwrite("y_call_candidate", &redd_data_t::y_call_candidate)
+        .def_readwrite("info_candidate", &redd_data_t::info_candidate)
+        .def(py::pickle(
+        // __getstate__: convert C++ object -> Python tuple
+        [](const redd_data_t &self) {
+            return py::make_tuple(
+                self.X,
+                self.y_ref,
+                self.y_call,
+                self.info,
+                self.X_candidate,
+                self.y_ref_candidate,
+                self.y_call_candidate,
+                self.info_candidate
+            );
+        },
+        // __setstate__: convert tuple -> C++ object
+        [](py::tuple t) {
+            if (t.size() != 8)
+                throw std::runtime_error("Invalid state for ReddData!");
+            redd_data_t r;
+            r.X = t[0].cast<std::vector<std::vector<std::vector<float>>>>();
+            r.y_ref = t[1].cast<std::vector<std::vector<int>>>();
+            r.y_call = t[2].cast<std::vector<std::vector<int>>>();
+            r.info = t[3].cast<std::vector<std::string>>();
+            r.X_candidate = t[4].cast<std::vector<std::vector<std::vector<float>>>>();
+            r.y_ref_candidate = t[5].cast<std::vector<std::vector<int>>>();
+            r.y_call_candidate = t[6].cast<std::vector<std::vector<int>>>();
+            r.info_candidate = t[7].cast<std::vector<std::string>>();
+            return r;
+        }
+    ));
     pybind_model<u16>(m, "U16");
     pybind_model<u32>(m, "U32");
     ModelDF::pybind(m);
@@ -76,4 +136,5 @@ PYBIND11_MODULE(_uncalled4, m) {
     AlnDF::pybind(m);
     CmpDF::pybind(m);
 }
+
 

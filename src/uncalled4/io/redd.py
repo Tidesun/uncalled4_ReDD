@@ -8,9 +8,9 @@ import _uncalled4
 import numpy as np
 import pandas as pd
 import sys
+import h5py
 
-
-class Eventalign(TrackIO):
+class ReDD(TrackIO):
     FORMAT = "eventalign"
 
     def __init__(self, filename, write, tracks, track_count):
@@ -22,12 +22,7 @@ class Eventalign(TrackIO):
             self.init_write_mode()
         else:
             self.init_read_mode()
-    # def _init_redd_output(self, buffered, mode="w"):
-    #     if buffered:
-    #         self.output = None
-    #         self.out_buffer = list()
-    #     else:
-    #         self.output =  HDF5File(self.filename)
+
     def init_write_mode(self):
         TrackIO.init_write_mode(self)
 
@@ -50,12 +45,12 @@ class Eventalign(TrackIO):
 
         if self.write_samples:
             self.header += ["samples"]
-        # self._init_redd_output(self, self.prms.buffered)
-        TrackIO._init_hdf5_output(self, self.prms.buffered)
 
-        # if not self.prms.buffered:
-        #     self.output.write("\t".join(self.header) + "\n")
-        # self.init_hdf5()
+        TrackIO._init_output(self, self.prms.buffered)
+
+        if not self.prms.buffered:
+            self.output.write("\t".join(self.header) + "\n")
+
     def init_read_mode(self):
         name = self.filename
 
@@ -69,13 +64,6 @@ class Eventalign(TrackIO):
         self.track_in = self.init_track(name, name, self.conf)
 
     #def write_layers(self, track, groups):
-    def write_buffer(self, buf=None):
-        if buf is None:
-            buf = [self.out_buffer]
-        for out in buf:
-            self.output.write(out)
-
-
     def write_alignment(self, aln):
         events = aln.to_pandas(["seq.kmer", "dtw"], ["seq.pos"]).sort_index().droplevel(0, axis=1)
 
@@ -113,16 +101,16 @@ class Eventalign(TrackIO):
             read_id = str(aln.id)
         self.next_aln_id()
         
-        if isinstance(model.instance, _uncalled4.PoreModelU16):
-            self.writer = _uncalled4.write_eventalign_redd_new_U16
-        elif isinstance(model.instance, _uncalled4.PoreModelU32):
-            self.writer = _uncalled4.write_eventalign_redd_new_U32
-        else:
-            raise ValueError(f"Unknown PoreModel type: {model.instance}")
+        # if isinstance(model.instance, _uncalled4.PoreModelU16):
+        #     self.writer = _uncalled4.write_eventalign_new_U16
+        # elif isinstance(model.instance, _uncalled4.PoreModelU32):
+        #     self.writer = _uncalled4.write_eventalign_new_U32
+        # else:
+        #     raise ValueError(f"Unknown PoreModel type: {model.instance}")
 
-        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal) #TODO compute internally?
-        # self.write_to_hdf5()
-        self._set_output(redd_data)
+        # eventalign = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal) #TODO compute internally?
+
+        # self._set_output(eventalign)
 
     def iter_alns(self, layers=None, track_id=None, coords=None, aln_id=None, read_id=None, fwd=None, full_overlap=None, ref_index=None):
 
