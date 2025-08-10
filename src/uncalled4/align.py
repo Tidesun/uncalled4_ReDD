@@ -55,6 +55,7 @@ def init_model(tracks):
 
     evdt = EVDT_PRESETS.get(tracks.model.bases_per_sec, None)
     tracks.conf.load_group("event_detector", evdt, keep_nondefaults=True)
+    tracks.output.load_candidate_map()
 
 class AlignPool:
     def __init__(self, tracks):

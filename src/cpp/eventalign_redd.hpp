@@ -178,7 +178,7 @@ void get_raw_signals_feature(const std::vector<float>& data,float& mean, size_t&
 
 }
 template <typename ModelType>
-redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name, bool signal_index, py::array_t<float> signal_np) {
+redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name, bool signal_index, py::array_t<float> signal_np,py::dict _redd_candidate_ratio_map) {
     // init_redd_hdf5_file(redd_window_size,output_file);
     auto signal = PyArray<float>(signal_np);
     auto coord = aln.seq.coord;
@@ -201,7 +201,7 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
 
     int redd_window_size = 9;
     int half_redd_window_size = redd_window_size/2;
-    std::unordered_map<std::string, std::unordered_map<u_int64_t, float>> redd_candidate_ratio_map;
+    std::unordered_map<std::string, std::unordered_map<u_int64_t, float>> redd_candidate_ratio_map = _redd_candidate_ratio_map.cast<std::unordered_map<std::string, std::unordered_map<u_int64_t, float>>>();
 
 
 

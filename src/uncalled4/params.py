@@ -38,6 +38,9 @@ IOParams._def_params(
 
     ("eventalign_in", None, list, "Eventalign (nanopolish) input file (or \"-\"/no argument for stdin)"),
     ("eventalign_out", None, str, "Eventalign (nanopolish) output file (or \"-\"/no argument for stdout)"),
+    ("redd_out", None, str, "ReDD output file prefix (or \"-\"/no argument for stdout)"),
+    ("redd_candidate", None, str, "ReDD canidate file"),
+    ("redd_window_size", 9, int, "ReDD window size"),
     ("eventalign_index", None, str, "Nanopolish index file"),
     ("eventalign_flags", [], list, f"Eventalign optional flags (comma-separated list of \"\"{eventalign_flags}\")"),
     ("tombo_in", None, None, "Fast5 files containing Tombo alignments"),

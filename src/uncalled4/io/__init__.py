@@ -22,16 +22,26 @@ import pysam
 from time import time
 import h5py
 class HDF5File():
-    def __init__(self,filename):
-        self.h5f = h5py.File(filename, 'w')
-        windowsize = 9
+    def __init__(self,filename,prms):
+        self.prms = prms
+        if self.prms.redd_candidate is None:
+            self.h5f = h5py.File(filename+'.hdf5', 'w',locking=False)
+        else:
+            self.h5f = h5py.File(filename+'.noncandidate.hdf5', 'w',locking=False)
+            self.h5f_candidate = h5py.File(filename+'.candidate.hdf5', 'w',locking=False)
+        windowsize = self.prms.redd_window_size
         featuredim = 5
         self.h5f.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32')#features has 3+4 
         self.h5f.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int')
         self.h5f.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int')
         self.h5f.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str))#features has 3+4 
+        if self.prms.redd_candidate is not None:
+            self.h5f_candidate.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32')#features has 3+4 
+            self.h5f_candidate.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int')
+            self.h5f_candidate.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int')
+            self.h5f_candidate.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str))#features has 3+4 
     def write(self,redd_data):
-        windowsize = 9
+        windowsize = self.prms.redd_window_size
         featuredim = 5
         # for redd_data in out:
         X,y_call,y_ref,info = np.array(redd_data.X),np.array(redd_data.y_call),np.array(redd_data.y_ref),redd_data.info
@@ -48,13 +58,34 @@ class HDF5File():
 
         self.h5f['info'].resize((saved_size+new_size,))
         self.h5f['info'][saved_size:,]=info
+        if (self.prms.redd_candidate is not None) and (len(redd_data.info_candidate) != 0):
+            X,y_call,y_ref,info = np.array(redd_data.X_candidate),np.array(redd_data.y_call_candidate),np.array(redd_data.y_ref_candidate),redd_data.info_candidate
+            saved_size = self.h5f_candidate['X'].shape[0]
+            new_size = X.shape[0]
+            self.h5f_candidate['X'].resize((saved_size+new_size,windowsize,featuredim))
+            self.h5f_candidate['X'][saved_size:,:,:]=np.asarray(X)
+            
+            self.h5f_candidate['y_call'].resize((saved_size+new_size,windowsize))
+            self.h5f_candidate['y_call'][saved_size:,:]=np.asarray(y_call)
+
+            self.h5f_candidate['y_ref'].resize((saved_size+new_size,windowsize))
+            self.h5f_candidate['y_ref'][saved_size:,:]=np.asarray(y_ref)
+
+            self.h5f_candidate['info'].resize((saved_size+new_size,))
+            self.h5f_candidate['info'][saved_size:,]=info
+    def close(self):
+        if self.h5f is not None:
+            self.h5f.close()
+        if self.h5f_candidate is not None:
+            self.h5f_candidate.close()
 
 INPUT_PARAMS = np.array(["eventalign_in", "tombo_in", "bam_in"])
-OUTPUT_PARAMS = np.array(["tsv_out", "eventalign_out", "bam_out", "model_dir", "m6anet_out"])
+OUTPUT_PARAMS = np.array(["tsv_out", "eventalign_out", "bam_out", "model_dir", "m6anet_out",'redd_out'])
 
 OUT_EXT = {
     "tsv_out" : "tsv", 
     "eventalign_out" : "txt", 
+    "redd_out":"hdf5",
     "bam_out" : "bam"
 }
 
@@ -141,10 +172,9 @@ class TrackIO:
             self.out_buffer = list()
         else:
             if self.filename == "-":
-                self.output =  HDF5File(self.filename)
+                self.output =  HDF5File(self.filename,self.prms)
             else:
-                self.output =  HDF5File(self.filename)
-
+                self.output =  HDF5File(self.filename,self.prms)
     def _set_output(self, out):
         if self.prms.buffered:
             self.out_buffer.append(out)
@@ -190,6 +220,7 @@ INPUTS = {
 OUTPUTS = {
     "bam_out" : BAM,
     "eventalign_out" : Eventalign,
+    "redd_out" : Eventalign,
     "tsv_out" : TSV,
     "model_dir" : ModelTrainer,
     "m6anet_out" : M6anet,

@@ -52,6 +52,8 @@ class Eventalign(TrackIO):
             self.header += ["samples"]
         # self._init_redd_output(self, self.prms.buffered)
         TrackIO._init_hdf5_output(self, self.prms.buffered)
+        # TrackIO._init_output(self, self.prms.buffered)
+        # self.load_candidate_map()
 
         # if not self.prms.buffered:
         #     self.output.write("\t".join(self.header) + "\n")
@@ -69,12 +71,20 @@ class Eventalign(TrackIO):
         self.track_in = self.init_track(name, name, self.conf)
 
     #def write_layers(self, track, groups):
-    def write_buffer(self, buf=None):
-        if buf is None:
-            buf = [self.out_buffer]
-        for out in buf:
-            self.output.write(out)
 
+    def load_candidate_map(self):
+        candidate_file = self.prms.redd_candidate
+        self.redd_candidate_ratio_map = {}
+        if candidate_file is not None:
+            with open(candidate_file,'r') as f:
+                for line in f:
+                    fields = line.split('\t')
+                    contig = fields[0]
+                    ref_position = int(fields[1]) - 1
+                    ratio = float(fields[3])
+                    if contig not in self.redd_candidate_ratio_map:
+                        self.redd_candidate_ratio_map[contig] = {}
+                    self.redd_candidate_ratio_map[contig][ref_position] = ratio
 
     def write_alignment(self, aln):
         events = aln.to_pandas(["seq.kmer", "dtw"], ["seq.pos"]).sort_index().droplevel(0, axis=1)
@@ -119,8 +129,8 @@ class Eventalign(TrackIO):
             self.writer = _uncalled4.write_eventalign_redd_new_U32
         else:
             raise ValueError(f"Unknown PoreModel type: {model.instance}")
-
-        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal) #TODO compute internally?
+        # redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
+        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
         # self.write_to_hdf5()
         self._set_output(redd_data)
 
