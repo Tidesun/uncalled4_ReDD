@@ -119,6 +119,7 @@ std::vector<float> get_scaled_samples_redd(float *samples, uint64_t start_idx, u
         double s = samples[i];
         double scaled_s = s - raw_signal_median;
         scaled_s /= raw_signal_mad;
+        // scaled_s = s;
         if (scaled_s < -5.0){
             scaled_s = -5.0;
         }
@@ -185,12 +186,14 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
     auto &model = aln.seq.model;
     auto sample_rate = model.PRMS.sample_rate;
 
-
     float * signal_arr = &signal[0];
     int64_t len_raw_signal = signal.size();
+    // for (size_t i = 0; i < len_raw_signal; ++i){
+    //     signal_arr[i] = signal_arr[i] * 23.1105 + 92.5619;
+    // }
     float raw_signal_median = get_median_pa(signal_arr,len_raw_signal);
     float raw_signal_mad = get_median_mad_pa(signal_arr,len_raw_signal);
-    int n_collapse = 1;
+    // int n_collapse = 1;
 
     size_t event_idx_start = -1;
     size_t event_idx_end = -1;
@@ -210,9 +213,9 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
 
     
 
-    for (int i = 0-redd_window_size; i < (int)aln.dtw.size()+redd_window_size; i+=n_collapse) {
+    for (int i = 0-redd_window_size; i < (int)aln.dtw.size()+redd_window_size; i++) {
         if ((i < 0) || (i >= aln.dtw.size())){
-            n_collapse = 1;
+            // n_collapse = 1;
             redd_feature_t redd_feature = {0,'N','N',0,0,0,0,0,0,0};
             redd_feature_vec.push_back(redd_feature);
         } else {
@@ -235,20 +238,20 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
             uint64_t start_idx = samps.start+1; //inclusive
             uint64_t end_idx = samps.end; //non-inclusive
             std::vector<float> samples = get_scaled_samples_redd(signal_arr, start_idx, end_idx,raw_signal_median,raw_signal_mad);
-            n_collapse = 1;
-            while (i + n_collapse < aln.dtw.size() && aln.seq.mpos[i] ==  aln.seq.mpos[i+n_collapse]){
-                auto &new_samps = aln.dtw.samples.coords[i+n_collapse];
-                uint64_t new_start_idx = new_samps.start+1; //inclusive
-                uint64_t new_end_idx = new_samps.end; //non-inclusive
-                std::vector<float> new_samples = get_scaled_samples_redd(signal_arr, new_start_idx, new_end_idx,raw_signal_median,raw_signal_mad);
-                samples.insert(samples.end(), new_samples.begin(), new_samples.end());
-                // if(strcmp(ea.model_kmer,alignments[i+n_collapse].model_kmer)!=0){ //TODO: NNNN kmers must be handled
-                //     fprintf(stderr, "model kmer does not match! %s vs %s\n",ea.model_kmer,alignments[i+n_collapse].model_kmer);
-                // }
-                event_idx_end = i+n_collapse;
-                n_collapse++;
+            // n_collapse = 1;
+            // while (i + n_collapse < aln.dtw.size() && aln.seq.mpos[i] ==  aln.seq.mpos[i+n_collapse]){
+            //     auto &new_samps = aln.dtw.samples.coords[i+n_collapse];
+            //     uint64_t new_start_idx = new_samps.start+1; //inclusive
+            //     uint64_t new_end_idx = new_samps.end; //non-inclusive
+            //     std::vector<float> new_samples = get_scaled_samples_redd(signal_arr, new_start_idx, new_end_idx,raw_signal_median,raw_signal_mad);
+            //     samples.insert(samples.end(), new_samples.begin(), new_samples.end());
+            //     // if(strcmp(ea.model_kmer,alignments[i+n_collapse].model_kmer)!=0){ //TODO: NNNN kmers must be handled
+            //     //     fprintf(stderr, "model kmer does not match! %s vs %s\n",ea.model_kmer,alignments[i+n_collapse].model_kmer);
+            //     // }
+            //     event_idx_end = i+n_collapse;
+            //     n_collapse++;
                 
-            }
+            // }
             float mean = 0.0;
             float stdev = 0.0;
             float skewness = 0.0;
@@ -383,6 +386,15 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
     //     append_arr_to_dataset(redd_window_size,hdf5_output_file_prefix+".candidate.hdf5",single_read_redd_data.X_candidate,single_read_redd_data.y_ref_candidate,single_read_redd_data.y_call_candidate, single_read_redd_data.info_candidate);
     //     append_arr_to_dataset(redd_window_size,hdf5_output_file_prefix+".noncandidate.hdf5",single_read_redd_data.X,single_read_redd_data.y_ref,single_read_redd_data.y_call, single_read_redd_data.info);
     // }
+    for (const auto& layer : single_read_redd_data.X) { // Iterate through the "layers" (outermost vector)
+        for (const auto& row : layer) {          // Iterate through the "rows" within each layer (middle vector)
+            for (int element : row) {            // Iterate through the "elements" within each row (innermost vector)
+                std::cout << element << " ";
+            }
+            std::cout << std::endl; // Newline after each row
+        }
+        std::cout << std::endl;     // Newline after each layer for better readability
+    }
     return single_read_redd_data;
 };
 

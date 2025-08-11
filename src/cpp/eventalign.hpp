@@ -83,66 +83,66 @@ std::string write_eventalign_new(Alignment<ModelType> &aln, bool write_name, boo
     return ss.str();
 }
 
-template <typename ModelType>
-std::string write_eventalign(
-        Config &conf,
-        ModelType &model,
-        std::string read_id,
-        bool fwd,
-        ProcessedRead read, 
-        const std::string &ref_name, py::array_t<i64> ref_np,
-        bool signal_index,
-        py::array_t<typename ModelType::kmer_t> kmer_np,
-        py::array_t<i32> event_index_np,
-        py::array_t<float> std_level_np,
-        py::array_t<float> signal_np) {
+// template <typename ModelType>
+// std::string write_eventalign(
+//         Config &conf,
+//         ModelType &model,
+//         std::string read_id,
+//         bool fwd,
+//         ProcessedRead read, 
+//         const std::string &ref_name, py::array_t<i64> ref_np,
+//         bool signal_index,
+//         py::array_t<typename ModelType::kmer_t> kmer_np,
+//         py::array_t<i32> event_index_np,
+//         py::array_t<float> std_level_np,
+//         py::array_t<float> signal_np) {
 
-    auto ref = PyArray<i64>(ref_np);
-    auto kmers = PyArray<typename ModelType::kmer_t>(kmer_np);
-    auto event_index = PyArray<i32>(event_index_np);
-    auto std_level = PyArray<float>(std_level_np);
-    auto signal = PyArray<float>(signal_np);
+//     auto ref = PyArray<i64>(ref_np);
+//     auto kmers = PyArray<typename ModelType::kmer_t>(kmer_np);
+//     auto event_index = PyArray<i32>(event_index_np);
+//     auto std_level = PyArray<float>(std_level_np);
+//     auto signal = PyArray<float>(signal_np);
 
-    float sample_rate = conf.pore_model.sample_rate;
+//     float sample_rate = conf.pore_model.sample_rate;
 
-    std::stringstream ss;
+//     std::stringstream ss;
 
-    for (size_t i = 0; i < ref.size(); i++) {
-        auto &evt = read.events[i];
-        auto kmer = kmers[i], model_kmer = kmer;
-        if (conf.pore_model.reverse) model_kmer = model.kmer_rev(kmer);
-        auto ref_kmer = model_kmer;
-        if (!fwd) ref_kmer = model.kmer_comp(ref_kmer);
+//     for (size_t i = 0; i < ref.size(); i++) {
+//         auto &evt = read.events[i];
+//         auto kmer = kmers[i], model_kmer = kmer;
+//         if (conf.pore_model.reverse) model_kmer = model.kmer_rev(kmer);
+//         auto ref_kmer = model_kmer;
+//         if (!fwd) ref_kmer = model.kmer_comp(ref_kmer);
 
-        ss << ref_name << "\t"
-           << ref[i] << "\t"
-           << model.kmer_to_str(ref_kmer) << "\t"
-           << read_id << "\t"
-           << "t" << "\t"
-           << event_index[i] << "\t"
-           << model.current.norm_to_pa(evt.mean) << "\t"
-           << (model.current.norm_to_pa_sd(evt.stdv)) << "\t"
-           << (evt.length / sample_rate) << "\t"
-           << model.kmer_to_str(model_kmer) << "\t"
-           << model.current.norm_to_pa(model.current.mean[kmer]) << "\t"
-           << model.current.norm_to_pa_sd(model.current.stdv[kmer]) << "\t"
-           << std_level[i];
+//         ss << ref_name << "\t"
+//            << ref[i] << "\t"
+//            << model.kmer_to_str(ref_kmer) << "\t"
+//            << read_id << "\t"
+//            << "t" << "\t"
+//            << event_index[i] << "\t"
+//            << model.current.norm_to_pa(evt.mean) << "\t"
+//            << (model.current.norm_to_pa_sd(evt.stdv)) << "\t"
+//            << (evt.length / sample_rate) << "\t"
+//            << model.kmer_to_str(model_kmer) << "\t"
+//            << model.current.norm_to_pa(model.current.mean[kmer]) << "\t"
+//            << model.current.norm_to_pa_sd(model.current.stdv[kmer]) << "\t"
+//            << std_level[i];
 
-        if (signal_index) {
-           ss << "\t" << evt.start << "\t"
-              << evt.start + evt.length; //<< "\n";
-        }
+//         if (signal_index) {
+//            ss << "\t" << evt.start << "\t"
+//               << evt.start + evt.length; //<< "\n";
+//         }
 
-        if (signal.size() > 0) {
-            ss << "\t" << signal[evt.start];
-            for (size_t j = 1; j < evt.length; j++) {
-                ss << "," << signal[evt.start+j];
-            }
-        }
+//         if (signal.size() > 0) {
+//             ss << "\t" << signal[evt.start];
+//             for (size_t j = 1; j < evt.length; j++) {
+//                 ss << "," << signal[evt.start+j];
+//             }
+//         }
 
-        ss << "\n";
-    }
-    return ss.str();
-}
+//         ss << "\n";
+//     }
+//     return ss.str();
+// }
 
 #endif

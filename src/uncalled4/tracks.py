@@ -776,7 +776,7 @@ class RefstatsSplit:
         if len(self.compare) > 0 and track_count != 2:
             raise ValueError("\"%s\" stats can only be computed using exactly two tracks" % "\", \"".join(self.compare))
 
-from .io import M6anet, TSV, Eventalign, Tombo, BAM, ModelTrainer, INPUTS, OUTPUTS, INPUT_PARAMS, OUTPUT_PARAMS
+from .io import M6anet, TSV, Eventalign, Tombo, BAM, ModelTrainer, ReDD, INPUTS, OUTPUTS, INPUT_PARAMS, OUTPUT_PARAMS
 
 class Tracks:
     def __init__(self, *args, **kwargs):
@@ -1037,6 +1037,8 @@ class Tracks:
                 self.output = BAM(filename, True, self, track_count)
             elif out_format == "model_dir":
                 self.output = ModelTrainer(filename, True, self, track_count)
+            elif out_format == 'redd_out':
+                self.output = ReDD(filename, True, self, track_count)
 
             track_count += len(self.output.aln_tracks)
             for track in self.output.aln_tracks:

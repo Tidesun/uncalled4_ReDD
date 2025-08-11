@@ -55,7 +55,6 @@ def init_model(tracks):
 
     evdt = EVDT_PRESETS.get(tracks.model.bases_per_sec, None)
     tracks.conf.load_group("event_detector", evdt, keep_nondefaults=True)
-    tracks.output.load_candidate_map()
 
 class AlignPool:
     def __init__(self, tracks):
@@ -99,6 +98,7 @@ class AlignPool:
 def dtw_pool(conf):
     mp.set_start_method("spawn")
     t = time()
+    conf.tracks.io.buffered = False
     tracks = Tracks(conf=conf)
     assert(tracks.output is not None)
     i = 0
@@ -109,6 +109,7 @@ def dtw_pool(conf):
         i += len(chunk)
         tracks.output.write_buffer(chunk)
         status_counts.update(counts)
+    tracks.output.output.close()
     sys.stderr.write(str(status_counts) + "\n")
 
 def dtw_worker(p):

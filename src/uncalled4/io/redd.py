@@ -8,10 +8,10 @@ import _uncalled4
 import numpy as np
 import pandas as pd
 import sys
-import h5py
+
 
 class ReDD(TrackIO):
-    FORMAT = "eventalign"
+    FORMAT = "redd"
 
     def __init__(self, filename, write, tracks, track_count):
         TrackIO.__init__(self, filename, write, tracks, track_count)
@@ -22,7 +22,12 @@ class ReDD(TrackIO):
             self.init_write_mode()
         else:
             self.init_read_mode()
-
+    # def _init_redd_output(self, buffered, mode="w"):
+    #     if buffered:
+    #         self.output = None
+    #         self.out_buffer = list()
+    #     else:
+    #         self.output =  HDF5File(self.filename)
     def init_write_mode(self):
         TrackIO.init_write_mode(self)
 
@@ -45,12 +50,14 @@ class ReDD(TrackIO):
 
         if self.write_samples:
             self.header += ["samples"]
+        # self._init_redd_output(self, self.prms.buffered)
+        TrackIO._init_hdf5_output(self, self.prms.buffered)
+        # TrackIO._init_output(self, self.prms.buffered)
+        self.load_candidate_map()
 
-        TrackIO._init_output(self, self.prms.buffered)
-
-        if not self.prms.buffered:
-            self.output.write("\t".join(self.header) + "\n")
-
+        # if not self.prms.buffered:
+        #     self.output.write("\t".join(self.header) + "\n")
+        # self.init_hdf5()
     def init_read_mode(self):
         name = self.filename
 
@@ -64,6 +71,21 @@ class ReDD(TrackIO):
         self.track_in = self.init_track(name, name, self.conf)
 
     #def write_layers(self, track, groups):
+
+    def load_candidate_map(self):
+        candidate_file = self.prms.redd_candidate
+        self.redd_candidate_ratio_map = {}
+        if candidate_file is not None:
+            with open(candidate_file,'r') as f:
+                for line in f:
+                    fields = line.split('\t')
+                    contig = fields[0]
+                    ref_position = int(fields[1]) - 1
+                    ratio = float(fields[3])
+                    if contig not in self.redd_candidate_ratio_map:
+                        self.redd_candidate_ratio_map[contig] = {}
+                    self.redd_candidate_ratio_map[contig][ref_position] = ratio
+
     def write_alignment(self, aln):
         events = aln.to_pandas(["seq.kmer", "dtw"], ["seq.pos"]).sort_index().droplevel(0, axis=1)
 
@@ -88,29 +110,28 @@ class ReDD(TrackIO):
         else:
             read = ProcessedRead(evts)
 
-        if self.write_samples:
-            signal = model.norm_to_pa(read.get_norm_signal())
-            if len(signal) == 0:
-                raise RuntimeError("Failed to output read signal")
-        else:
-            signal = []
-
+        # if self.write_samples:
+        #     signal = model.norm_to_pa(read.get_norm_signal())
+        #     if len(signal) == 0:
+        #         raise RuntimeError("Failed to output read signal")
+        # else:
+        signal = model.norm_to_pa(read.get_norm_signal())
         if self.write_read_name:
             read_id = aln.read_id #track.alignments["read_id"].iloc[0]
         else:
             read_id = str(aln.id)
         self.next_aln_id()
         
-        # if isinstance(model.instance, _uncalled4.PoreModelU16):
-        #     self.writer = _uncalled4.write_eventalign_new_U16
-        # elif isinstance(model.instance, _uncalled4.PoreModelU32):
-        #     self.writer = _uncalled4.write_eventalign_new_U32
-        # else:
-        #     raise ValueError(f"Unknown PoreModel type: {model.instance}")
-
-        # eventalign = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal) #TODO compute internally?
-
-        # self._set_output(eventalign)
+        if isinstance(model.instance, _uncalled4.PoreModelU16):
+            self.writer = _uncalled4.write_eventalign_redd_new_U16
+        elif isinstance(model.instance, _uncalled4.PoreModelU32):
+            self.writer = _uncalled4.write_eventalign_redd_new_U32
+        else:
+            raise ValueError(f"Unknown PoreModel type: {model.instance}")
+        # redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
+        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
+        # self.write_to_hdf5()
+        self._set_output(redd_data)
 
     def iter_alns(self, layers=None, track_id=None, coords=None, aln_id=None, read_id=None, fwd=None, full_overlap=None, ref_index=None):
 
@@ -128,7 +149,7 @@ class ReDD(TrackIO):
                     try:
                         self.cache[self.next_aln] = next(self.iter)
                     except StopIteration:
-                        raise RuntimeError(f"Eventalign read_index is greater than BAM file length: {aln_id}")
+                        raise RuntimeError(f"ReDD read_index is greater than BAM file length: {aln_id}")
                     self.next_aln += 1
 
                 ret = self.cache[aln_id]
@@ -155,7 +176,7 @@ class ReDD(TrackIO):
                 end = df["position"].max()
                 
                 if sam.reference_name != contig or start < sam.reference_start or end > sam.reference_end:
-                    raise ValueError(f"Eventalign coordinates ({contig}:{start}-{end}) not contained in corresponding SAM coordinates ({sam.reference_name}:{sam.reference_start}-{sam.reference_end}) for read_index {aln_id}")
+                    raise ValueError(f"ReDD coordinates ({contig}:{start}-{end}) not contained in corresponding SAM coordinates ({sam.reference_name}:{sam.reference_start}-{sam.reference_end}) for read_index {aln_id}")
 
                 aln = self.tracks.bam_in.sam_to_aln(sam, load_moves=False)
                 

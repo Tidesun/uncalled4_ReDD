@@ -210,6 +210,7 @@ from .eventalign import Eventalign
 from .tombo import Tombo
 from .model_trainer import ModelTrainer
 from .m6anet import M6anet
+from .redd import ReDD
 
 INPUTS = {
     "bam_in" : BAM,
@@ -220,7 +221,7 @@ INPUTS = {
 OUTPUTS = {
     "bam_out" : BAM,
     "eventalign_out" : Eventalign,
-    "redd_out" : Eventalign,
+    "redd_out" : ReDD,
     "tsv_out" : TSV,
     "model_dir" : ModelTrainer,
     "m6anet_out" : M6anet,
