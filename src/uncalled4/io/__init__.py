@@ -25,10 +25,10 @@ class HDF5File():
     def __init__(self,filename,prms):
         self.prms = prms
         if self.prms.redd_candidate is None:
-            self.h5f = h5py.File(filename+'.hdf5', 'w',locking=False)
+            self.h5f = h5py.File(filename+'.hdf5', 'w',locking=True)
         else:
-            self.h5f = h5py.File(filename+'.noncandidate.hdf5', 'w',locking=False)
-            self.h5f_candidate = h5py.File(filename+'.candidate.hdf5', 'w',locking=False)
+            self.h5f = h5py.File(filename+'.noncandidate.hdf5', 'w',locking=True)
+            self.h5f_candidate = h5py.File(filename+'.candidate.hdf5', 'w',locking=True)
         windowsize = self.prms.redd_window_size
         featuredim = 5
         self.h5f.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32')#features has 3+4 

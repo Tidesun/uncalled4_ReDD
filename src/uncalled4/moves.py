@@ -45,11 +45,14 @@ def sam_to_read_moves(conf, read, sam, shift=False):
     elif sam.has_tag("mv"):
         mv = np.array(sam.get_tag("mv"))
         mv_stride = mv[0]
+        template_start = None
         for tag_name, tag_value,tag_type in sam.get_tags(True):
             if (tag_name == 'ts') & (tag_type == 'S'):
                 template_start = tag_value
              
         moves = mv[1:]
+        if (template_start is None) or (mv is None):
+            return None
 
     else:
         return None
