@@ -129,8 +129,9 @@ class ReDD(TrackIO):
         else:
             raise ValueError(f"Unknown PoreModel type: {model.instance}")
         # redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
-        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map) #TODO compute internally?
+        # redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map,self.prms.redd_window_size) #TODO compute internally?
         # self.write_to_hdf5()
+        redd_data = self.writer(aln.instance, self.write_read_name, self.write_signal_index, signal,self.redd_candidate_ratio_map,self.prms.redd_window_size) #TODO compute internally?
         self._set_output(redd_data)
 
     def iter_alns(self, layers=None, track_id=None, coords=None, aln_id=None, read_id=None, fwd=None, full_overlap=None, ref_index=None):
