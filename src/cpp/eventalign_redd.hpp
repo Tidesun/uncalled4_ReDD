@@ -385,15 +385,6 @@ redd_data_t write_eventalign_redd_new(Alignment<ModelType> &aln, bool write_name
     //     append_arr_to_dataset(redd_window_size,hdf5_output_file_prefix+".candidate.hdf5",single_read_redd_data.X_candidate,single_read_redd_data.y_ref_candidate,single_read_redd_data.y_call_candidate, single_read_redd_data.info_candidate);
     //     append_arr_to_dataset(redd_window_size,hdf5_output_file_prefix+".noncandidate.hdf5",single_read_redd_data.X,single_read_redd_data.y_ref,single_read_redd_data.y_call, single_read_redd_data.info);
     // }
-    for (const auto& layer : single_read_redd_data.X) { // Iterate through the "layers" (outermost vector)
-        for (const auto& row : layer) {          // Iterate through the "rows" within each layer (middle vector)
-            for (int element : row) {            // Iterate through the "elements" within each row (innermost vector)
-                std::cout << element << " ";
-            }
-            std::cout << std::endl; // Newline after each row
-        }
-        std::cout << std::endl;     // Newline after each layer for better readability
-    }
     return single_read_redd_data;
 };
 

@@ -65,6 +65,7 @@ DTW_OPTS = (
     Opt("--min-aln-length", "tracks"),
     Opt(("-N", "--norm-mode"), "normalizer", "mode", choices=["ref_mom", "model_mom"]),
     Opt("--zero-ts", "tracks", action="store_true"),
+    Opt(("-R", "--region"), "tracks", "ref_bounds", type=RefCoord),
     CONFIG_OPT,
 )
 

@@ -108,6 +108,11 @@ def dtw_pool(conf):
     for chunk,counts in pool: #dtw_pool_iter(tracks):
         i += len(chunk)
         tracks.output.write_buffer(chunk)
+        success_reads = 0
+        if 'Success' in counts:
+            success_reads = counts['Success']
+        sys.stdout.write(f'Process {success_reads} reads.\n')
+        sys.stdout.flush()
         status_counts.update(counts)
     tracks.output.output.close()
     sys.stderr.write(str(status_counts) + "\n")

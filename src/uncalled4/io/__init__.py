@@ -40,6 +40,15 @@ class HDF5File():
             self.h5f_candidate.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int')
             self.h5f_candidate.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int')
             self.h5f_candidate.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str))#features has 3+4 
+        # self.h5f.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32',chunks=(8192, windowsize,featuredim), compression="lzf")#features has 3+4 
+        # self.h5f.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int',chunks=(8192, windowsize), compression="lzf")
+        # self.h5f.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int',chunks=(8192, windowsize), compression="lzf")
+        # self.h5f.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str),chunks=(8192, ), compression="lzf")#features has 3+4 
+        # if self.prms.redd_candidate is not None:
+        #     self.h5f_candidate.create_dataset('X', (0,windowsize,featuredim),maxshape=(None,windowsize,featuredim), dtype='float32',chunks=(8192, windowsize,featuredim), compression="lzf")#features has 3+4 
+        #     self.h5f_candidate.create_dataset('y_ref', (0,windowsize),maxshape=(None,windowsize), dtype='int',chunks=(8192, windowsize), compression="lzf")
+        #     self.h5f_candidate.create_dataset('y_call', (0,windowsize),maxshape=(None,windowsize), dtype='int',chunks=(8192,windowsize), compression="lzf")
+        #     self.h5f_candidate.create_dataset('info', (0,),maxshape=(None,), dtype=h5py.special_dtype(vlen=str),chunks=(8192, ), compression="lzf")#features has 3+4 
     def write(self,redd_data):
         windowsize = self.prms.redd_window_size
         featuredim = 5
@@ -73,6 +82,7 @@ class HDF5File():
 
             self.h5f_candidate['info'].resize((saved_size+new_size,))
             self.h5f_candidate['info'][saved_size:,]=info
+        self.h5f.flush()
     def close(self):
         if self.h5f is not None:
             self.h5f.close()
